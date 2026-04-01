@@ -3,6 +3,7 @@
  */
 import { create } from "zustand";
 import { login, register, logout, getCurrentUser } from "../api/auth";
+import useDashboardStore from "./dashboardStore";
 
 const formatErrorDetail = (detail) => {
   if (!detail) return null;
@@ -95,6 +96,7 @@ const useAuthStore = create((set) => ({
 
   logout: () => {
     logout();
+    useDashboardStore.getState().clearDashboard();
     set({
       user: null,
       token: null,

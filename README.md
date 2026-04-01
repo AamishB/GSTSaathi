@@ -10,6 +10,48 @@
 
 GSTSaathi is an AI-powered GST compliance automation tool designed for Indian MSMEs. It automates invoice management, ITC reconciliation, and GST return filing using a multi-agent AI architecture with smolagents CodeAgents.
 
+---
+
+## Screenshots
+
+Add your product screenshots in this section. A good approach is to store images in `frontend/public/screenshots/` and reference them as shown below.
+
+### 1. Login Page
+
+```md
+![Login Page](frontend/public/screenshots/login-page.png)
+```
+
+### 2. Invoice Upload
+
+```md
+![Invoice Upload](frontend/public/screenshots/invoice-upload.png)
+```
+
+### 3. Dashboard Overview
+
+```md
+![Dashboard Overview](frontend/public/screenshots/dashboard-overview.png)
+```
+
+### 4. Reconciliation Results
+
+```md
+![Reconciliation Results](frontend/public/screenshots/reconciliation-results.png)
+```
+
+### 5. Export Reports
+
+```md
+![Export Reports](frontend/public/screenshots/export-reports.png)
+```
+
+### 5. Exported Report Excel
+
+```md
+![Export Reports](frontend/public/screenshots/exported-report.png)
+```
+
 ### Key Features (P0 MVP)
 
 - **Excel/CSV Invoice Upload** - Drag-drop upload with automatic parsing
@@ -215,17 +257,6 @@ The P0 MVP includes 6 smolagents CodeAgents:
 
 ---
 
-## Development Phases
-
-- [x] **Phase 1:** Project Setup
-- [x] **Phase 2:** Backend Core (Database, Auth, API)
-- [x] **Phase 3:** P0 Agents Implementation
-- [x] **Phase 4:** Agent Integration
-- [x] **Phase 5:** Frontend Implementation
-- [x] **Phase 6:** Testing & Polish delivery package
-
-## Phase 6 Test Pack
-
 ### Generate sample data
 
 From `backend/` run:
@@ -259,7 +290,7 @@ This generates:
 - ✅ API routes (auth, upload, reconcile, export, dashboard)
 - ✅ Services (auth_service, upload_service, export_service)
 - ✅ Utility modules (GSTIN validator, HSN validator, ITC calculator)
-- ✅ 6 P0 AI Agents using smolagents
+- ✅ 6 AI Agents using smolagents
 - ✅ Frontend project structure
 - ✅ Frontend API client and Zustand stores
 
@@ -299,15 +330,6 @@ This generates:
 ### pandas 3.0 Breaking Changes
 
 **Reference:** See https://pandas.pydata.org/docs/whatsnew/v3.0.0.html
-
----
-
-## Documentation
-
-- **Development Plan:** `DEVELOPMENT_PLAN.md` (in parent folder)
-- **Requirements:** `REQUIREMENTS.md` (in parent folder)
-- **Features:** `FEATURES_AND_TECH_STACK.md` (in parent folder)
-- **Architecture:** `SYSTEM_ARCHITECTURE.md` (in parent folder)
 
 ---
 
