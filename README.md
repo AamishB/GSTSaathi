@@ -302,15 +302,6 @@ This generates:
 
 ---
 
-## Documentation
-
-- **Development Plan:** `DEVELOPMENT_PLAN.md` (in parent folder)
-- **Requirements:** `REQUIREMENTS.md` (in parent folder)
-- **Features:** `FEATURES_AND_TECH_STACK.md` (in parent folder)
-- **Architecture:** `SYSTEM_ARCHITECTURE.md` (in parent folder)
-
----
-
 ## License
 
 MIT
