@@ -10,6 +10,35 @@
 
 GSTSaathi is an AI-powered GST compliance automation tool designed for Indian MSMEs. It automates invoice management, ITC reconciliation, and GST return filing using a multi-agent AI architecture with smolagents CodeAgents.
 
+---
+
+## Screenshots
+
+
+### 1. Login Page
+
+![Login Page](frontend/public/screenshots/login-page.png)
+
+### 2. Invoice Upload
+
+![Invoice Upload](frontend/public/screenshots/invoice-upload.png)
+
+### 3. Dashboard Overview
+
+![Dashboard Overview](frontend/public/screenshots/dashboard-overview.png)
+
+### 4. Reconciliation Results
+
+![Reconciliation Results](frontend/public/screenshots/reconciliation-results.png)
+
+### 5. Export Reports
+
+![Export Reports](frontend/public/screenshots/export-reports.png)
+
+### 5. Exported Report Excel
+
+![Export Reports](frontend/public/screenshots/exported-report.png)
+
 ### Key Features (P0 MVP)
 
 - **Excel/CSV Invoice Upload** - Drag-drop upload with automatic parsing
@@ -215,17 +244,6 @@ The P0 MVP includes 6 smolagents CodeAgents:
 
 ---
 
-## Development Phases
-
-- [x] **Phase 1:** Project Setup
-- [x] **Phase 2:** Backend Core (Database, Auth, API)
-- [x] **Phase 3:** P0 Agents Implementation
-- [x] **Phase 4:** Agent Integration
-- [x] **Phase 5:** Frontend Implementation
-- [x] **Phase 6:** Testing & Polish delivery package
-
-## Phase 6 Test Pack
-
 ### Generate sample data
 
 From `backend/` run:
@@ -259,7 +277,7 @@ This generates:
 - ✅ API routes (auth, upload, reconcile, export, dashboard)
 - ✅ Services (auth_service, upload_service, export_service)
 - ✅ Utility modules (GSTIN validator, HSN validator, ITC calculator)
-- ✅ 6 P0 AI Agents using smolagents
+- ✅ 6 AI Agents using smolagents
 - ✅ Frontend project structure
 - ✅ Frontend API client and Zustand stores
 
