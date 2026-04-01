@@ -14,7 +14,6 @@ GSTSaathi is an AI-powered GST compliance automation tool designed for Indian MS
 
 ## Screenshots
 
-Add your product screenshots in this section. A good approach is to store images in `frontend/public/screenshots/` and reference them as shown below.
 
 ### 1. Login Page
 
