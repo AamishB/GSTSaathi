@@ -18,39 +18,27 @@ Add your product screenshots in this section. A good approach is to store images
 
 ### 1. Login Page
 
-```md
 ![Login Page](frontend/public/screenshots/login-page.png)
-```
 
 ### 2. Invoice Upload
 
-```md
 ![Invoice Upload](frontend/public/screenshots/invoice-upload.png)
-```
 
 ### 3. Dashboard Overview
 
-```md
 ![Dashboard Overview](frontend/public/screenshots/dashboard-overview.png)
-```
 
 ### 4. Reconciliation Results
 
-```md
 ![Reconciliation Results](frontend/public/screenshots/reconciliation-results.png)
-```
 
 ### 5. Export Reports
 
-```md
 ![Export Reports](frontend/public/screenshots/export-reports.png)
-```
 
 ### 5. Exported Report Excel
 
-```md
 ![Export Reports](frontend/public/screenshots/exported-report.png)
-```
 
 ### Key Features (P0 MVP)
 
