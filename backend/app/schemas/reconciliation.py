@@ -77,6 +77,30 @@ class ReconciliationLogResponse(BaseModel):
     total: int
 
 
+class WhatsAppReminderRequest(BaseModel):
+    """Schema for triggering WhatsApp reminders to vendors."""
+    vendor_gstins: List[str] = Field(default_factory=list)
+    language: str = Field(default="hi", pattern="^(hi|en)$")
+
+
+class WhatsAppReminderResult(BaseModel):
+    """Per-vendor WhatsApp send result."""
+    vendor_gstin: str
+    sent: bool
+    timestamp: str
+
+
+class WhatsAppReminderResponse(BaseModel):
+    """Schema for WhatsApp reminder summary response."""
+    status: str
+    total_candidates: int
+    reminders_generated: int
+    reminders_sent: int
+    language: str
+    results: List[WhatsAppReminderResult]
+    message: str
+
+
 class MismatchRecord(BaseModel):
     """Schema for mismatch record in reports."""
     invoice_number: str

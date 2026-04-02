@@ -42,3 +42,17 @@ export const getReconciliationLog = async () => {
   const response = await apiClient.get("/reconcile/log");
   return response.data;
 };
+
+/**
+ * Send WhatsApp reminders for missing invoices.
+ * @param {string[]} vendorGstins - Optional vendor GSTIN filter
+ * @param {string} language - Reminder language (hi|en)
+ * @returns {Promise} - Reminder send summary
+ */
+export const sendWhatsAppReminders = async (vendorGstins = [], language = "hi") => {
+  const response = await apiClient.post("/reconcile/send-whatsapp", {
+    vendor_gstins: vendorGstins,
+    language,
+  });
+  return response.data;
+};

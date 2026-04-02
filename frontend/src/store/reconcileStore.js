@@ -6,6 +6,7 @@ import {
   runReconciliation,
   getReconciliationResults,
   getReconciliationLog,
+  sendWhatsAppReminders,
 } from "../api/reconcile";
 
 const useReconcileStore = create((set) => ({
@@ -15,6 +16,8 @@ const useReconcileStore = create((set) => ({
   reconciliationResults: [],
   reconciliationLog: [],
   statistics: null,
+  sendingWhatsApp: false,
+  whatsappSummary: null,
   error: null,
 
   // Actions
@@ -61,12 +64,32 @@ const useReconcileStore = create((set) => ({
     }
   },
 
+  sendWhatsAppReminders: async (vendorGstins = [], language = "hi") => {
+    set({ sendingWhatsApp: true, error: null });
+    try {
+      const result = await sendWhatsAppReminders(vendorGstins, language);
+      set({
+        sendingWhatsApp: false,
+        whatsappSummary: result,
+      });
+      return result;
+    } catch (error) {
+      set({
+        sendingWhatsApp: false,
+        error: error.response?.data?.detail || "Failed to send WhatsApp reminders",
+      });
+      throw error;
+    }
+  },
+
   clearResults: () => {
     set({
       reconciliationResults: [],
       reconciliationStatus: null,
       reconciliationLog: [],
       statistics: null,
+      sendingWhatsApp: false,
+      whatsappSummary: null,
       error: null,
     });
   },
