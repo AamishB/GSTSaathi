@@ -4,8 +4,8 @@
 
 ### 🤖 AI-Powered GST Compliance Automation for Indian MSMEs
 
-[![Version](https://img.shields.io/badge/Version-0.1.0-blue.svg?style=for-the-badge)](https://github.com/your-repo/gst-compliance/releases)
-[![Status](https://img.shields.io/badge/Status-In%20Development-yellow.svg?style=for-the-badge)](https://github.com/your-repo/gst-compliance)
+[![Version](https://img.shields.io/badge/Version-0.1.0-blue.svg?style=for-the-badge)](https://github.com/AamishB/GSTSaathi)
+[![Status](https://img.shields.io/badge/Status-In%20Development-yellow.svg?style=for-the-badge)](https://github.com/AamishB/GSTSaathi)
 [![Python](https://img.shields.io/badge/Python-3.11%7C3.12-green.svg?style=for-the-badge&logo=python)](https://python.org)
 [![License](https://img.shields.io/badge/License-MIT-orange.svg?style=for-the-badge)](LICENSE)
 
