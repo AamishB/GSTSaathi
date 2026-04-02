@@ -9,6 +9,7 @@ import pandas as pd
 from datetime import datetime
 import uuid
 import json
+from importlib import import_module
 
 from ..database import get_db
 from ..schemas.reconciliation import (
@@ -18,6 +19,9 @@ from ..schemas.reconciliation import (
     ReconciliationResultSchema,
     ReconciliationLogResponse,
     ReconciliationLogItem,
+    WhatsAppReminderRequest,
+    WhatsAppReminderResponse,
+    WhatsAppReminderResult,
 )
 from ..api.deps import get_current_user
 from ..models.user import User
@@ -394,4 +398,89 @@ async def get_reconciliation_log(
             for row in rows
         ],
         total=len(rows),
+    )
+
+
+@router.post("/send-whatsapp", response_model=WhatsAppReminderResponse)
+async def send_whatsapp_reminders(
+    payload: WhatsAppReminderRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Send mock WhatsApp reminders for missing-in-GSTR2B invoices."""
+    company = db.query(Company).filter(Company.user_id == current_user.id).first()
+    if not company:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Company profile not found",
+        )
+
+    try:
+        whatsapp_module = import_module("agents.whatsapp_agent")
+        generate_vendor_reminders = whatsapp_module.generate_vendor_reminders
+        send_mock_whatsapp = whatsapp_module.send_mock_whatsapp
+    except Exception:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="WhatsApp agent is unavailable in this deployment.",
+        )
+
+    missing_rows = (
+        db.query(ReconciliationResult)
+        .join(Invoice)
+        .filter(
+            Invoice.company_id == company.id,
+            ReconciliationResult.match_status == "missing_in_gstr2b",
+        )
+        .all()
+    )
+
+    if payload.vendor_gstins:
+        requested = set(payload.vendor_gstins)
+        missing_rows = [
+            row for row in missing_rows if row.invoice.supplier_gstin in requested
+        ]
+
+    if not missing_rows:
+        return WhatsAppReminderResponse(
+            status="completed",
+            total_candidates=0,
+            reminders_generated=0,
+            reminders_sent=0,
+            language=payload.language,
+            results=[],
+            message="No missing invoices found for WhatsApp reminders.",
+        )
+
+    mismatches = [
+        {
+            "status": "missing",
+            "vendor_gstin": row.invoice.supplier_gstin,
+            "vendor_name": row.invoice.supplier_name,
+            "invoice_number": row.invoice.invoice_number,
+            "our_record_amount": float(row.invoice.taxable_value or 0),
+        }
+        for row in missing_rows
+    ]
+
+    reminders = generate_vendor_reminders(mismatches, payload.language)
+    send_results = [send_mock_whatsapp(reminder) for reminder in reminders]
+    response_results = [
+        WhatsAppReminderResult(
+            vendor_gstin=item["vendor_gstin"],
+            sent=item["sent"],
+            timestamp=item["timestamp"],
+        )
+        for item in send_results
+    ]
+    reminders_sent = sum(1 for item in response_results if item.sent)
+
+    return WhatsAppReminderResponse(
+        status="completed",
+        total_candidates=len(missing_rows),
+        reminders_generated=len(reminders),
+        reminders_sent=reminders_sent,
+        language=payload.language,
+        results=response_results,
+        message=f"Sent {reminders_sent} WhatsApp reminder(s).",
     )

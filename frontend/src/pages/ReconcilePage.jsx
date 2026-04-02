@@ -17,6 +17,7 @@ import {
   CheckCircleOutlined,
   WarningOutlined,
   DownloadOutlined,
+  MessageOutlined,
 } from "@ant-design/icons";
 import useReconcileStore from "../store/reconcileStore";
 import useAuthStore from "../store/authStore";
@@ -44,10 +45,12 @@ function ReconcilePage() {
     reconciliationResults,
     reconciliationLog,
     statistics,
+    sendingWhatsApp,
     error,
     runReconciliation,
     loadResults,
     loadReconciliationLog,
+    sendWhatsAppReminders,
     clearResults,
   } = useReconcileStore();
 
@@ -86,6 +89,19 @@ function ReconcilePage() {
       message.error("Failed to export report");
     }
   };
+
+  const handleSendWhatsApp = async () => {
+    try {
+      const result = await sendWhatsAppReminders([], "hi");
+      message.success(result.message || "WhatsApp reminders sent successfully!");
+    } catch (err) {
+      message.error(err.response?.data?.detail || "Failed to send WhatsApp reminders");
+    }
+  };
+
+  const hasMissingInGstr2b = reconciliationResults.some(
+    (item) => item.match_status === "missing_in_gstr2b",
+  );
 
   const logColumns = [
     {
@@ -142,6 +158,15 @@ function ReconcilePage() {
           {statistics?.mismatchCount > 0 && (
             <Button icon={<DownloadOutlined />} onClick={handleExportReport}>
               Export Report
+            </Button>
+          )}
+          {hasMissingInGstr2b && (
+            <Button
+              icon={<MessageOutlined />}
+              onClick={handleSendWhatsApp}
+              loading={sendingWhatsApp}
+            >
+              Send WhatsApp Reminders
             </Button>
           )}
         </Space>
