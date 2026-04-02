@@ -474,15 +474,31 @@ npm run dev
 
 ## 📸 Screenshots
 
-<div align="center">
+<div>
 
-|                                                                                                                            |                                                                                                            |                                                                                                                    |
-| :------------------------------------------------------------------------------------------------------------------------: | :--------------------------------------------------------------------------------------------------------: | :----------------------------------------------------------------------------------------------------------------: |
-|                                                     **1. Login Page**                                                      |                                           **2. Invoice Upload**                                            |                                             **3. Dashboard Overview**                                              |
-|             <img src="frontend/public/screenshots/login-page.png" alt="Login Page" width="320" height="180" />             | <img src="frontend/public/screenshots/invoice-upload.png" alt="Invoice Upload" width="320" height="180" /> | <img src="frontend/public/screenshots/dashboard-overview.png" alt="Dashboard Overview" width="320" height="180" /> |
-|                                               **4. Reconciliation Results**                                                |                                           **5. Export Reports**                                            |                                            **6. Exported Report Excel**                                            |
-| <img src="frontend/public/screenshots/reconciliation-results.png" alt="Reconciliation Results" width="320" height="180" /> | <img src="frontend/public/screenshots/export-reports.png" alt="Export Reports" width="320" height="180" /> |    <img src="frontend/public/screenshots/exported-report.png" alt="Exported Report" width="320" height="180" />    |
+**1. Login Page**
 
+![Login-Page](frontend/public/screenshots/login-page.png)
+
+**2. Invoice Upload**
+
+![Invoice-Upload](frontend/public/screenshots/invoice-upload.png)
+
+**3. Dashboard Overview**
+
+![Dashboard-Overview](frontend/public/screenshots/dashboard-overview.png)
+
+**4. Reconciliation Results**
+
+![Reconciliation-Results](frontend/public/screenshots/reconciliation-results.png)
+
+**5. Export Reports**
+
+![Export-Reports](frontend/public/screenshots/export-reports.png)
+
+**6. Exported Report Excel**
+
+![Exported-Report-Excel](frontend/public/screenshots/exported-report.png)
 </div>
 
 ---
