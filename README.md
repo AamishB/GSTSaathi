@@ -412,20 +412,6 @@ npm run dev
 - ✅ Frontend project structure
 - ✅ Frontend API client and Zustand stores
 
-</div>
-
-### 🚧 Next Steps
-
-<div style="background-color: #fff3cd; border-left: 4px solid #ffc107; padding: 16px; border-radius: 4px;color:black;">
-
-1. 🔲 Install backend dependencies and test server startup
-2. 🔲 Install frontend dependencies and test server startup
-3. 🔲 Create sample test data (invoices.xlsx, gstr2b.json)
-4. 🔲 Test end-to-end flow with sample data
-5. 🔲 Implement remaining frontend pages
-
-</div>
-
 ---
 
 ## 📈 Success Criteria
