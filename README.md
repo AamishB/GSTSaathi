@@ -476,8 +476,6 @@ npm run dev
 
 <div align="center">
 
-Add your product screenshots in this section. A good approach is to store images in `frontend/public/screenshots/` and reference them as shown below.
-
 |                                                                                                                            |                                                                                                            |                                                                                                                    |
 | :------------------------------------------------------------------------------------------------------------------------: | :--------------------------------------------------------------------------------------------------------: | :----------------------------------------------------------------------------------------------------------------: |
 |                                                     **1. Login Page**                                                      |                                           **2. Invoice Upload**                                            |                                             **3. Dashboard Overview**                                              |
