@@ -109,7 +109,7 @@ Indian MSMEs seeking GST compliance automation
 | :------------------ | :------------------------- | :----: |
 | **Framework**       | FastAPI 0.135+             |   ✅   |
 | **Agent Framework** | smolagents 1.24+           |   ✅   |
-| **LLM Framework**   | LangChain 1.2+             |   ✅   |
+| **LLM Framework**   | LangChain 1.2+             |   ❌   |
 | **LLM**             | Gemini API                 |   ✅   |
 | **Data Processing** | pandas 3.0+                |   ✅   |
 | **Database**        | SQLite + SQLAlchemy 2.0+   |   ✅   |
