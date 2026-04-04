@@ -24,6 +24,21 @@ import PageLayout from "../components/layout/PageLayout";
 const { Title, Text, Paragraph } = Typography;
 const { Option } = Select;
 
+const formatUploadDate = (value) => {
+  if (!value) return "-";
+
+  const raw = String(value);
+  const hasTimezone = /([zZ]|[+-]\d{2}:\d{2})$/.test(raw);
+  const normalized = hasTimezone ? raw : `${raw}Z`;
+  const parsed = new Date(normalized);
+
+  if (Number.isNaN(parsed.getTime())) {
+    return "-";
+  }
+
+  return parsed.toLocaleString("en-IN");
+};
+
 function UploadPage() {
   const navigate = useNavigate();
   const { message } = AntdApp.useApp();
@@ -69,8 +84,7 @@ function UploadPage() {
       title: "Uploaded At",
       dataIndex: "created_at",
       key: "created_at",
-      render: (value) =>
-        value ? new Date(value).toLocaleString("en-IN") : "-",
+      render: (value) => formatUploadDate(value),
     },
   ];
 

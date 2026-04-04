@@ -4,7 +4,6 @@ Uses smolagents CodeAgent with Gemini API.
 """
 from typing import Any, Dict, List, Optional, Callable
 from smolagents import CodeAgent, tool, InferenceClientModel
-from langchain_google_genai import ChatGoogleGenerativeAI
 
 from ..config import settings
 

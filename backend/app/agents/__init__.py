@@ -9,6 +9,7 @@ from .reconciliation_agent import create_reconciliation_agent, get_reconciliatio
 from .compliance_agent import create_compliance_agent, get_compliance_agent
 from .filing_agent import create_filing_agent, get_filing_agent
 from .orchestrator import create_orchestrator_agent, get_orchestrator_agent
+from .whatsapp_agent import generate_vendor_reminders, send_mock_whatsapp
 
 __all__ = [
     # Base
@@ -27,4 +28,7 @@ __all__ = [
     "get_compliance_agent",
     "get_filing_agent",
     "get_orchestrator_agent",
+    # WhatsApp helpers
+    "generate_vendor_reminders",
+    "send_mock_whatsapp",
 ]

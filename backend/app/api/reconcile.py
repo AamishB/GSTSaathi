@@ -2,14 +2,14 @@
 Reconciliation API routes.
 Integrated with ReconciliationAgent and ComplianceAgent.
 """
+import logging
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from typing import Optional
 import pandas as pd
 from datetime import datetime
 import uuid
-import json
-from importlib import import_module
 
 from ..database import get_db
 from ..schemas.reconciliation import (
@@ -32,8 +32,12 @@ from ..models.reconciliation import ReconciliationResult
 from ..models.reconciliation_log import ReconciliationLog
 from ..agents.reconciliation_agent import get_reconciliation_agent
 from ..agents.compliance_agent import get_compliance_agent
+from ..agents.orchestrator import get_orchestrator_agent
+from ..agents.whatsapp_agent import generate_vendor_reminders, send_mock_whatsapp
+from ..utils.agent_logging import log_agent_event
 
 router = APIRouter(prefix="/reconcile", tags=["Reconciliation"])
+logger = logging.getLogger("gstsaathi.agents")
 
 
 @router.post("/run", response_model=ReconciliationRunResponse)
@@ -115,11 +119,34 @@ async def run_reconciliation(
             for entry in gstr2b_entries
         ])
         
-        # Use ReconciliationAgent to match invoices
-        reconciliation_agent = get_reconciliation_agent()
-        match_result = reconciliation_agent.execute(
-            "Match invoices with GSTR-2B data",
-            {"invoices_df": invoices_df, "gstr2b_df": gstr2b_df}
+        # Run reconciliation through OrchestratorAgent to keep multi-agent flow active.
+        orchestrator_agent = get_orchestrator_agent()
+        log_agent_event(
+            logger,
+            agent="OrchestratorAgent",
+            task="Run reconciliation",
+            status="started",
+            user_id=current_user.id,
+            details={
+                "invoice_count": len(invoices_df),
+                "gstr2b_count": len(gstr2b_df),
+            },
+        )
+        orchestration_result = orchestrator_agent.execute(
+            "Run reconciliation",
+            {"workflow": "reconciliation", "invoices_df": invoices_df, "gstr2b_df": gstr2b_df},
+        )
+        match_result = orchestration_result.get("match_result", {})
+        log_agent_event(
+            logger,
+            agent="OrchestratorAgent",
+            task="Run reconciliation",
+            status="success" if match_result.get("success") else "failed",
+            user_id=current_user.id,
+            details={
+                "matches": len(match_result.get("matches", [])),
+                "itc_at_risk": match_result.get("itc_at_risk"),
+            },
         )
         
         if not match_result.get("success"):
@@ -133,13 +160,35 @@ async def run_reconciliation(
             db, company.id, match_result.get("matches", []), invoices, gstr2b_entries
         )
 
+        # Use ComplianceAgent for ITC-at-risk metric from missing invoices.
+        compliance_agent = get_compliance_agent()
+        missing_invoices = [
+            row for row in match_result.get("matches", [])
+            if row.get("match_status") == "missing_in_gstr2b"
+        ]
+        itc_risk_result = compliance_agent.execute(
+            "Calculate ITC at risk",
+            {"missing_invoices": missing_invoices},
+        )
+        log_agent_event(
+            logger,
+            agent="ComplianceAgent",
+            task="Calculate ITC at risk",
+            status="success" if itc_risk_result.get("success", True) else "failed",
+            user_id=current_user.id,
+            details={
+                "missing_invoice_count": len(missing_invoices),
+                "total_itc_at_risk": itc_risk_result.get("total_itc_at_risk"),
+            },
+        )
+
         # Persist reconciliation run log (F42).
         log = ReconciliationLog(
             company_id=company.id,
             job_id=job_id,
             matched_count=results["matched"],
             mismatch_count=results["mismatched"],
-            itc_at_risk=float(match_result.get("itc_at_risk", 0) or 0),
+            itc_at_risk=float(itc_risk_result.get("total_itc_at_risk", match_result.get("itc_at_risk", 0)) or 0),
             status="completed",
         )
         db.add(log)
@@ -152,6 +201,14 @@ async def run_reconciliation(
         )
         
     except Exception as e:
+        log_agent_event(
+            logger,
+            agent="OrchestratorAgent",
+            task="Run reconciliation",
+            status="failed",
+            user_id=current_user.id,
+            details={"error": str(e)},
+        )
         # Best-effort failed run log.
         try:
             failed_log = ReconciliationLog(
@@ -415,16 +472,6 @@ async def send_whatsapp_reminders(
             detail="Company profile not found",
         )
 
-    try:
-        whatsapp_module = import_module("agents.whatsapp_agent")
-        generate_vendor_reminders = whatsapp_module.generate_vendor_reminders
-        send_mock_whatsapp = whatsapp_module.send_mock_whatsapp
-    except Exception:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="WhatsApp agent is unavailable in this deployment.",
-        )
-
     missing_rows = (
         db.query(ReconciliationResult)
         .join(Invoice)
@@ -464,6 +511,14 @@ async def send_whatsapp_reminders(
     ]
 
     reminders = generate_vendor_reminders(mismatches, payload.language)
+    log_agent_event(
+        logger,
+        agent="WhatsAppAgent",
+        task="Generate vendor reminders",
+        status="success",
+        user_id=current_user.id,
+        details={"reminder_count": len(reminders), "language": payload.language},
+    )
     send_results = [send_mock_whatsapp(reminder) for reminder in reminders]
     response_results = [
         WhatsAppReminderResult(
@@ -474,6 +529,18 @@ async def send_whatsapp_reminders(
         for item in send_results
     ]
     reminders_sent = sum(1 for item in response_results if item.sent)
+    log_agent_event(
+        logger,
+        agent="WhatsAppAgent",
+        task="Send reminders",
+        status="success" if reminders_sent == len(response_results) else "partial",
+        user_id=current_user.id,
+        details={
+            "requested": len(response_results),
+            "sent": reminders_sent,
+            "failed": len(response_results) - reminders_sent,
+        },
+    )
 
     return WhatsAppReminderResponse(
         status="completed",
