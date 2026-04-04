@@ -124,6 +124,48 @@ def create_validator_agent() -> BaseAgent:
     agent.add_tool(validate_gstin_list)
     agent.add_tool(validate_hsn_code)
     agent.add_tool(validate_dataframe_gstins)
+
+    def execute(task: str, context: Dict = None) -> Dict:
+        """
+        Execute validation actions deterministically for known workflows.
+        """
+        context = context or {}
+        task_lower = task.lower() if task else ""
+
+        if "dataframe" in task_lower or "dataframe" in context:
+            dataframe = context.get("dataframe")
+            column_name = context.get("column") or context.get("column_name") or "gstin"
+            if dataframe is None:
+                return {
+                    "success": False,
+                    "error": "dataframe is required",
+                }
+            if not isinstance(dataframe, pd.DataFrame):
+                dataframe = pd.DataFrame(dataframe)
+            return validate_dataframe_gstins(dataframe, column_name)
+
+        if "list" in task_lower:
+            gstins = context.get("gstins", [])
+            return {
+                "success": True,
+                "results": validate_gstin_list(gstins),
+            }
+
+        if "hsn" in task_lower:
+            hsn_code = context.get("hsn_code", "")
+            turnover_slab = context.get("turnover_slab", "1.5cr_to_5cr")
+            return validate_hsn_code(hsn_code, turnover_slab)
+
+        if "gstin" in task_lower:
+            gstin = context.get("gstin", "")
+            return validate_single_gstin(gstin)
+
+        return {
+            "success": False,
+            "error": f"Unsupported validation task: {task}",
+        }
+
+    agent.execute = execute
     
     return agent
 

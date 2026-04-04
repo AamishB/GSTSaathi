@@ -192,6 +192,40 @@ def create_data_agent() -> BaseAgent:
     agent.add_tool(validate_invoice_data)
     agent.add_tool(check_duplicates_in_file)
     agent.add_tool(get_column_mapping)
+
+    def execute(task: str, context: Dict = None) -> Dict:
+        """
+        Execute data processing actions deterministically for known workflows.
+        """
+        context = context or {}
+        task_lower = task.lower() if task else ""
+        file_path = context.get("file_path")
+        action = (context.get("action") or "").lower()
+
+        if not file_path:
+            return {
+                "success": False,
+                "error": "file_path is required",
+            }
+
+        if action in {"parse"} or "parse" in task_lower:
+            return parse_excel_file(file_path)
+
+        if action in {"validate"} or "validate" in task_lower:
+            return validate_invoice_data(file_path)
+
+        if action in {"duplicates", "duplicate"} or "duplicate" in task_lower:
+            return check_duplicates_in_file(file_path)
+
+        if action in {"mapping", "map"} or "mapping" in task_lower:
+            return get_column_mapping(file_path)
+
+        return {
+            "success": False,
+            "error": f"Unsupported data task: {task}",
+        }
+
+    agent.execute = execute
     
     return agent
 

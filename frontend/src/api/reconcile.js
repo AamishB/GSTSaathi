@@ -49,7 +49,10 @@ export const getReconciliationLog = async () => {
  * @param {string} language - Reminder language (hi|en)
  * @returns {Promise} - Reminder send summary
  */
-export const sendWhatsAppReminders = async (vendorGstins = [], language = "hi") => {
+export const sendWhatsAppReminders = async (
+  vendorGstins = [],
+  language = "hi",
+) => {
   const response = await apiClient.post("/reconcile/send-whatsapp", {
     vendor_gstins: vendorGstins,
     language,

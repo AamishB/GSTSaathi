@@ -226,6 +226,38 @@ def create_compliance_agent() -> BaseAgent:
     agent.add_tool(calculate_itc_at_risk)
     agent.add_tool(calculate_net_gst_liability)
     agent.add_tool(check_section_17_5)
+
+    def execute(task: str, context: Dict = None) -> Dict:
+        """
+        Execute compliance calculations deterministically for known workflows.
+        """
+        context = context or {}
+        task_lower = task.lower() if task else ""
+
+        if "eligible itc" in task_lower:
+            return calculate_eligible_itc(
+                context.get("matched_invoices", []),
+                context.get("blocked_categories"),
+            )
+
+        if "itc at risk" in task_lower:
+            return calculate_itc_at_risk(context.get("missing_invoices", []))
+
+        if "net gst" in task_lower or "liability" in task_lower:
+            return calculate_net_gst_liability(
+                context.get("output_gst", {}),
+                context.get("eligible_itc", {}),
+            )
+
+        if "section 17" in task_lower or "blocked" in task_lower:
+            return check_section_17_5(context.get("invoice", {}))
+
+        return {
+            "success": False,
+            "error": f"Unsupported compliance task: {task}",
+        }
+
+    agent.execute = execute
     
     return agent
 

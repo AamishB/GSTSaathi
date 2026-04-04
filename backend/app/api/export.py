@@ -2,6 +2,8 @@
 Export API routes for GSTR-1, GSTR-3B, and report generation.
 Integrated with FilingAgent for document generation.
 """
+import logging
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.responses import JSONResponse, StreamingResponse
 from sqlalchemy.orm import Session
@@ -15,8 +17,10 @@ from ..models.company import Company
 from ..models.invoice import Invoice
 from ..models.reconciliation import ReconciliationResult
 from ..agents.filing_agent import get_filing_agent
+from ..utils.agent_logging import log_agent_event
 
 router = APIRouter(prefix="/export", tags=["Export"])
+logger = logging.getLogger("gstsaathi.agents")
 
 
 @router.get("/gstr1")
@@ -88,6 +92,14 @@ async def export_gstr1(
     
     # Use FilingAgent to generate GSTR-1
     filing_agent = get_filing_agent()
+    log_agent_event(
+        logger,
+        agent="FilingAgent",
+        task="Generate GSTR-1 return",
+        status="started",
+        user_id=current_user.id,
+        details={"invoice_count": len(invoices_dict), "period": period},
+    )
     result = filing_agent.execute(
         "Generate GSTR-1 return",
         {
@@ -95,6 +107,14 @@ async def export_gstr1(
             "company_gstin": company.gstin,
             "period": period,
         }
+    )
+    log_agent_event(
+        logger,
+        agent="FilingAgent",
+        task="Generate GSTR-1 return",
+        status="success" if result.get("success") else "failed",
+        user_id=current_user.id,
+        details={"period": period},
     )
     
     if not result.get("success"):
@@ -181,6 +201,14 @@ async def export_gstr3b(
     
     # Use FilingAgent to generate GSTR-3B
     filing_agent = get_filing_agent()
+    log_agent_event(
+        logger,
+        agent="FilingAgent",
+        task="Generate GSTR-3B return",
+        status="started",
+        user_id=current_user.id,
+        details={"invoice_count": len(invoices), "period": period},
+    )
     result = filing_agent.execute(
         "Generate GSTR-3B return",
         {
@@ -188,6 +216,14 @@ async def export_gstr3b(
             "eligible_itc": eligible_itc,
             "period": period,
         }
+    )
+    log_agent_event(
+        logger,
+        agent="FilingAgent",
+        task="Generate GSTR-3B return",
+        status="success" if result.get("success") else "failed",
+        user_id=current_user.id,
+        details={"period": period},
     )
     
     if not result.get("success"):
@@ -278,6 +314,14 @@ async def export_mismatch_report(
     
     # Use FilingAgent to generate report
     filing_agent = get_filing_agent()
+    log_agent_event(
+        logger,
+        agent="FilingAgent",
+        task="Generate mismatch report",
+        status="started",
+        user_id=current_user.id,
+        details={"mismatch_count": len(mismatches), "status_filter": status_filter},
+    )
     result = filing_agent.execute(
         "Generate mismatch report",
         {
@@ -285,6 +329,14 @@ async def export_mismatch_report(
             "company_name": company.legal_name,
             "period": datetime.now().strftime("%m-%Y"),
         }
+    )
+    log_agent_event(
+        logger,
+        agent="FilingAgent",
+        task="Generate mismatch report",
+        status="success" if result.get("success") else "failed",
+        user_id=current_user.id,
+        details={"mismatch_count": len(mismatches)},
     )
     
     if not result.get("success"):

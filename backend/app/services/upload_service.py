@@ -3,7 +3,7 @@ Upload service for handling file uploads and parsing.
 """
 import os
 import uuid
-from datetime import datetime
+from datetime import datetime, date
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 import pandas as pd
@@ -13,6 +13,47 @@ from ..config import settings
 from ..models.invoice import Invoice
 from ..models.gstr2b import GSTR2BEntry
 from ..utils.gstin_validator import validate_gstin
+
+
+def parse_invoice_date_value(value) -> date:
+    """Normalize supported invoice date formats to a date object."""
+    if pd.isna(value):
+        return datetime.now().date()
+
+    if isinstance(value, datetime):
+        return value.date()
+
+    if isinstance(value, date):
+        return value
+
+    if isinstance(value, str):
+        raw = value.strip()
+        if not raw:
+            return datetime.now().date()
+
+        for fmt in ("%d-%m-%Y", "%Y-%m-%d", "%d/%m/%Y", "%Y/%m/%d"):
+            try:
+                return datetime.strptime(raw, fmt).date()
+            except ValueError:
+                continue
+
+        parsed = pd.to_datetime(raw, errors="coerce", dayfirst=True)
+        if pd.notna(parsed):
+            return parsed.date()
+
+    parsed = pd.to_datetime(value, errors="coerce", dayfirst=True)
+    if pd.notna(parsed):
+        return parsed.date()
+
+    return datetime.now().date()
+
+
+def normalize_invoice_key(invoice_number, invoice_date, supplier_gstin) -> Tuple[str, str, str]:
+    """Create a canonical key for duplicate detection."""
+    normalized_number = str(invoice_number or "").strip().upper()
+    normalized_date = parse_invoice_date_value(invoice_date).isoformat()
+    normalized_supplier = str(supplier_gstin or "").strip().upper()
+    return normalized_number, normalized_date, normalized_supplier
 
 
 def generate_batch_id() -> str:
@@ -224,13 +265,25 @@ def detect_duplicates(
         List of duplicate records
     """
     duplicates = []
-    
-    # Check for duplicates within the uploaded file
-    if 'invoice_number' in df.columns and 'invoice_date' in df.columns and 'supplier_gstin' in df.columns:
-        dup_mask = df.duplicated(subset=['invoice_number', 'invoice_date', 'supplier_gstin'], keep='first')
-        dup_rows = df[dup_mask]
-        
-        for idx, row in dup_rows.iterrows():
+
+    required_columns = {'invoice_number', 'invoice_date', 'supplier_gstin'}
+    if not required_columns.issubset(df.columns):
+        return duplicates
+
+    # Normalize incoming rows once and reuse for both in-file and DB checks.
+    normalized_rows = []
+    for idx, row in df.iterrows():
+        key = normalize_invoice_key(
+            row.get('invoice_number'),
+            row.get('invoice_date'),
+            row.get('supplier_gstin'),
+        )
+        normalized_rows.append((idx, row, key))
+
+    # Check for duplicates within uploaded file.
+    seen_keys = set()
+    for idx, row, key in normalized_rows:
+        if key in seen_keys:
             duplicates.append({
                 "row": idx + 2,
                 "invoice_number": row.get('invoice_number'),
@@ -238,18 +291,23 @@ def detect_duplicates(
                 "supplier_gstin": row.get('supplier_gstin'),
                 "reason": "Duplicate within uploaded file",
             })
-    
-    # Check for duplicates in database
+        else:
+            seen_keys.add(key)
+
+    # Check for duplicates in database.
+    invoice_numbers = [key[0] for _, _, key in normalized_rows if key[0]]
     existing_invoices = db.query(Invoice).filter(
         Invoice.company_id == company_id,
-        Invoice.invoice_number.in_(df['invoice_number'].tolist()),
+        Invoice.invoice_number.in_(invoice_numbers),
     ).all()
-    
-    if existing_invoices:
-        existing_keys = {(inv.invoice_number, str(inv.invoice_date), inv.supplier_gstin) for inv in existing_invoices}
-        
-        for idx, row in df.iterrows():
-            key = (row.get('invoice_number'), str(row.get('invoice_date')), row.get('supplier_gstin'))
+
+    existing_keys = {
+        normalize_invoice_key(inv.invoice_number, inv.invoice_date, inv.supplier_gstin)
+        for inv in existing_invoices
+    }
+
+    if existing_keys:
+        for idx, row, key in normalized_rows:
             if key in existing_keys:
                 duplicates.append({
                     "row": idx + 2,
@@ -258,7 +316,7 @@ def detect_duplicates(
                     "supplier_gstin": row.get('supplier_gstin'),
                     "reason": "Already exists in database",
                 })
-    
+
     return duplicates
 
 
@@ -282,16 +340,7 @@ def dataframe_to_invoices(
     
     for _, row in df.iterrows():
         # Parse invoice date
-        invoice_date = row.get('invoice_date')
-        if isinstance(invoice_date, str):
-            from datetime import datetime
-            try:
-                invoice_date = datetime.strptime(invoice_date, "%d-%m-%Y").date()
-            except ValueError:
-                try:
-                    invoice_date = datetime.strptime(invoice_date, "%Y-%m-%d").date()
-                except ValueError:
-                    invoice_date = datetime.now().date()
+        invoice_date = parse_invoice_date_value(row.get('invoice_date'))
         
         # Calculate tax amounts if not provided
         taxable_value = float(row.get('taxable_value', 0))
@@ -311,11 +360,11 @@ def dataframe_to_invoices(
         
         invoice = Invoice(
             company_id=company_id,
-            invoice_number=str(row.get('invoice_number')),
+            invoice_number=str(row.get('invoice_number', '')).strip(),
             invoice_date=invoice_date,
-            supplier_gstin=str(row.get('supplier_gstin', '')).upper(),
+            supplier_gstin=str(row.get('supplier_gstin', '')).strip().upper(),
             supplier_name=str(row.get('supplier_name', '')),
-            recipient_gstin=str(row.get('recipient_gstin', '')).upper(),
+            recipient_gstin=str(row.get('recipient_gstin', '')).strip().upper(),
             recipient_name=str(row.get('recipient_name', '')),
             taxable_value=taxable_value,
             igst=igst,

@@ -295,6 +295,53 @@ def create_orchestrator_agent() -> BaseAgent:
     agent.add_tool(run_reconciliation)
     agent.add_tool(calculate_compliance_metrics)
     agent.add_tool(generate_exports)
+
+    def execute(task: str, context: Dict = None) -> Dict:
+        """
+        Execute orchestrator workflows deterministically for known tasks.
+        """
+        context = context or {}
+        task_lower = task.lower() if task else ""
+
+        if "upload" in task_lower or context.get("workflow") == "invoice_upload":
+            return process_invoice_upload(
+                context.get("file_path", ""),
+                int(context.get("company_id", 0) or 0),
+                context.get("turnover_slab", "1.5cr_to_5cr"),
+            )
+
+        if "reconciliation" in task_lower or context.get("workflow") == "reconciliation":
+            invoices_df = context.get("invoices_df")
+            gstr2b_df = context.get("gstr2b_df")
+            if invoices_df is None or gstr2b_df is None:
+                return {
+                    "success": False,
+                    "error": "invoices_df and gstr2b_df are required",
+                }
+            return run_reconciliation(invoices_df, gstr2b_df)
+
+        if "compliance" in task_lower or context.get("workflow") == "compliance_metrics":
+            return calculate_compliance_metrics(
+                context.get("invoices", []),
+                context.get("gstr2b_entries", []),
+                context.get("reconciliation_results", []),
+            )
+
+        if "export" in task_lower or context.get("workflow") == "export_generation":
+            return generate_exports(
+                context.get("invoices", []),
+                context.get("company_gstin", ""),
+                context.get("output_gst", {}),
+                context.get("eligible_itc", {}),
+                context.get("period", ""),
+            )
+
+        return {
+            "success": False,
+            "error": f"Unsupported orchestrator task: {task}",
+        }
+
+    agent.execute = execute
     
     return agent
 
